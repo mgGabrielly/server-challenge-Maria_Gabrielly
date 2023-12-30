@@ -1,32 +1,30 @@
-import { PrismaClient } from "@prisma/client";
-import  Bimesters from "@prisma/client";
-import  Disciplines from "@prisma/client";
+import { PrismaClient, Bimesters, Disciplines } from '@prisma/client';
 
 interface ResultData {
-    bimester: string;
-    discipline: string;
-    note: number;
+  bimester: Bimesters;
+  discipline: Disciplines;
+  note: number;
+}
+
+export class Result {
+  private prisma: PrismaClient;
+
+  constructor() {
+    this.prisma = new PrismaClient();
   }
-  
-  export class Result {
-    private prisma: PrismaClient;
-  
-    constructor() {
-      this.prisma = new PrismaClient();
+
+  async createResult(resultData: ResultData): Promise<any> {
+    try {
+      const result = await this.prisma.result.create({
+        data: {
+          ...resultData,
+        },
+      });
+      return result;
+    } catch (error) {
+      throw new Error(`Erro ao criar: ${error}`);
     }
-  
-    async createResult(resultData: ResultData): Promise<any> {
-      try {
-        const result = await this.prisma.result.create({
-          data: {
-            ...resultData,
-          },
-        });
-        return result;
-      } catch (error) {
-        throw new Error(`Erro ao criar: ${error}`);
-      }
-    }
+  }
 
   async listResults(): Promise<any[]> {
     try {
