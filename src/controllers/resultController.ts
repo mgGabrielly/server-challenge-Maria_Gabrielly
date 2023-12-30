@@ -1,5 +1,10 @@
 import { Request, Response } from 'express';
-import { Result } from '../models/result.model'; // Certifique-se de ajustar o caminho para a sua classe Result
+import { Result } from '../models/result.model';
+import { PrismaClient } from '@prisma/client';
+import { checkResultExist } from '../components/checkExistenceOfResult';
+import { checkNote } from '../components/checkNoteFormat';
+
+const prisma = new PrismaClient();
 
 export class ResultController {
   private resultModel: Result;
@@ -10,7 +15,20 @@ export class ResultController {
 
   async createResult(req: Request, res: Response): Promise<void> {
     try {
-      const resultData = req.body; // Supondo que os dados são enviados via corpo da requisição
+      const { bimester, discipline, note } = req.body;
+
+      const resultExist = await checkResultExist( bimester, discipline );
+      if (resultExist) {
+        res.status(405).json( "Disciplina no bimetre já existe." );
+        return;
+      } 
+
+      if (!(checkNote(note))) {
+        res.status(406).json( "Nota inválida." );
+        return;
+      }
+
+      const resultData = { bimester, discipline, note };
       const result = await this.resultModel.createResult(resultData);
       res.status(201).json(result);
     } catch (error) {
@@ -29,11 +47,12 @@ export class ResultController {
 
   async deleteResult(req: Request, res: Response): Promise<void> {
     try {
-      const resultId = req.params.id; // Supondo que você está passando o ID na URL
+      const resultId = req.params.id;
       await this.resultModel.deleteResult(resultId);
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: `Erro ao deletar: ${error}` });
     }
   }
+
 }
